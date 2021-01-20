@@ -2,18 +2,19 @@ classdef Simulation
     
     properties
         N;
-        g_min;
-        g_max;
-        r_c;
-        t_c;
-        r_colors;
-        radii;
-        width,
-        height
+        g_min;      % Minimum of graph drawing
+        g_max;      % Max of graph for drawing
+        r_c;        % robot centers
+        t_c;        % task centers
+        r_colors;   % colors of the robots
+        radii;      % radius of the circle shape of the robots
+        width,      % width of the square shape of the tasks
+        height      % height of the square shape of the tasks
     end
     
     methods
         function obj = Simulation(N_, g_min_, g_max_)
+            % This is constructor of the class
             obj.N = N_;
             obj.g_min = g_min_;
             obj.g_max = g_max_;
@@ -26,6 +27,7 @@ classdef Simulation
         end
         
         function [] = draw_lines(obj, x)
+            % Draw lines from robots to the tasks
             b = 1;
             e = obj.N;
             for ii = 1:obj.N
@@ -36,8 +38,9 @@ classdef Simulation
             end
         end
         
-        function [obj, c, LB, UB] = get_constraint_matrices(obj)
-            r_min = obj.g_min+5; % maximal coordinate point
+        function [obj, c, A_eq, b_eq, LB, UB] = get_constraint_matrices(obj)
+            % Get robot, task coordinates. Get constraint matrices
+            r_min = obj.g_min+5;
             r_max = obj.g_max-5;
             
             obj.r_colors = rand(obj.N,3);
@@ -79,9 +82,21 @@ classdef Simulation
             c = get_c_vector(obj);
             LB = zeros((obj.N*obj.N),1);
             UB = ones((obj.N*obj.N),1);
+            
+            A_eq = zeros(2*obj.N,obj.N*obj.N);
+            ind = 0;
+            st = size(A_eq, 2) / obj.N;
+            for ii=1:obj.N
+                A_eq(ii,ii+ind:ii*st) = ones(1, obj.N);
+                A_eq(obj.N+1:end, ii+ind:ii*st) = eye(obj.N);
+                ind = ind + obj.N-1;
+            end
+            b_eq = ones(2*obj.N, 1);
+            
         end
         
         function [] = create_environment(obj)
+            % Create simulation environment
             for ii = 1:obj.N
                 xlim([obj.g_min obj.g_max])
                 ylim([obj.g_min obj.g_max])
@@ -108,6 +123,8 @@ function res = get_c_vector(obj)
 end
 
 function val = is_valid(p_x, p_y, ind, set)
+    % Check whether there is enough distance between points in order not to
+    % collide
     flg = 1;
     for ii = 1:ind-1
         dist_ = pdist([p_x,p_y;set(ii,1),set(ii,2)], 'euclidean');

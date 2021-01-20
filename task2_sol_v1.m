@@ -1,25 +1,15 @@
 clc; clear all; close all;
 
-N = 3; % Number of agents
-M = N; % Dimension of each agent
+N = 4; % Number of agents
+M = N; % Number of tasks
 
-%[c, ~, ~, ~, ~, LB, UB] = get_constraint_matrices(N, M);
 s1 = Simulation(N, 0, 40);
-[s1, c, LB, UB] = s1.get_constraint_matrices();
-A_eq = zeros(2*N,N*N);
-ind = 0;
+[s1, c, A_eq, b_eq, LB, UB] = s1.get_constraint_matrices();
 st = size(A_eq, 2) / N;
-for ii=1:N
-    A_eq(ii,ii+ind:ii*st) = ones(1, N);
-    A_eq(N+1:end, ii+ind:ii*st) = eye(N);
-    ind = ind + N-1;
-end
-b_eq = ones(N+M, 1);
 %%
 % Get central solution in order to calculate cost error
 options = optimoptions('linprog','Display','none');
 [~, fopt, exit_flag] = linprog(c,[],[],A_eq,b_eq,LB,UB,options);
-%[~, fopt1, exit_flag] = linprog(c,[],[],A_eq,b_eq,LB,UB,options);
 
 if exit_flag ~= 1
   fprintf(2,'A problem occurred in the centralized solution\n');
@@ -194,6 +184,10 @@ figure
 %   hold on, grid on, zoom on
 %   xlabel('t')
 %   ylabel('consensus error')
+
+%%
+% Create simulation of the environemtn with robots and the tasks
+% Assign robots to each of the tasks in an optimal way
 
 figure
     s1.create_environment();
